@@ -53,11 +53,12 @@ protected:
   ActiveQuicListenerTest()
       : version_(GetParam()), api_(Api::createApiForTest(simulated_time_system_)),
         dispatcher_(api_->allocateDispatcher()), clock_(*dispatcher_),
+        local_address_(Network::Test::getCanonicalLoopbackAddress(version_)),
         connection_handler_(*dispatcher_, "test_thread") {}
 
   void SetUp() override {
-    listen_socket_ = std::make_shared<Network::UdpListenSocket>(
-        Network::Test::getCanonicalLoopbackAddress(version_), nullptr, /*bind*/ true);
+    listen_socket_ =
+        std::make_shared<Network::UdpListenSocket>(local_address_, nullptr, /*bind*/ true);
     listen_socket_->addOptions(Network::SocketOptionFactory::buildIpPacketInfoOptions());
     listen_socket_->addOptions(Network::SocketOptionFactory::buildRxQueueOverFlowOptions());
 
@@ -113,9 +114,7 @@ protected:
   // TODO(bencebeky): Factor out parts common with
   // EnvoyQuicDispatcherTest::createFullChloPacket() to test_utils.
   void GenerateCHLO(quic::QuicConnectionId connection_id) {
-    client_sockets_.push_back(std::make_unique<Socket>(
-        Network::Test::getCanonicalLoopbackAddress(version_), nullptr, /*bind*/
-        false));
+    client_sockets_.push_back(std::make_unique<Socket>(local_address_, nullptr, /*bind*/ false));
     quic::CryptoHandshakeMessage chlo = quic::test::crypto_test_utils::GenerateDefaultInchoateCHLO(
         &clock_, quic::AllSupportedVersions()[0].transport_version,
         &ActiveQuicListenerPeer::crypto_config(*quic_listener_));
@@ -127,8 +126,8 @@ protected:
         quic::QuicCompressedCertsCache::kQuicCompressedCertsCacheSize);
     quic::test::crypto_test_utils::GenerateFullCHLO(
         chlo, &ActiveQuicListenerPeer::crypto_config(*quic_listener_),
-        envoyAddressInstanceToQuicSocketAddress(listen_socket_->localAddress()),
-        envoyAddressInstanceToQuicSocketAddress(client_sockets_.back()->localAddress()),
+        envoyAddressInstanceToQuicSocketAddress(local_address_),
+        envoyAddressInstanceToQuicSocketAddress(local_address_),
         quic::AllSupportedVersions()[0].transport_version, &clock_, signed_config, &cache,
         &full_chlo);
     // Overwrite version label to highest current supported version.
@@ -190,6 +189,7 @@ protected:
   Api::ApiPtr api_;
   Event::DispatcherPtr dispatcher_;
   EnvoyQuicClock clock_;
+  Network::Address::InstanceConstSharedPtr local_address_;
   Network::SocketSharedPtr listen_socket_;
   Network::SocketPtr client_socket_;
   std::shared_ptr<Network::MockReadFilter> read_filter_;
