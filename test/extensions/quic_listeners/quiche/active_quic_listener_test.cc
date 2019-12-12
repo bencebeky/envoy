@@ -8,7 +8,6 @@
 
 #include "quiche/quic/core/crypto/crypto_protocol.h"
 #include "quiche/quic/test_tools/crypto_test_utils.h"
-#include "quiche/quic/test_tools/quic_buffered_packet_store_peer.h"
 #include "quiche/quic/test_tools/quic_dispatcher_peer.h"
 #include "quiche/quic/test_tools/quic_test_utils.h"
 
@@ -254,14 +253,6 @@ TEST_P(ActiveQuicListenerTest, ProcessBufferedChlos) {
   EXPECT_FALSE(buffered_packets->HasChlosBuffered());
 
   ReadFromClientSockets();
-
-  // Cancel buffered packet expiration alarm to avoid failing assertion in
-  // QuicBufferedPacketStore destructor.
-  // TODO(danzh2010): Remove once #8496 lands.
-  auto alarm = quic::test::QuicBufferedPacketStorePeer::expiration_alarm(buffered_packets);
-  if (alarm) {
-    alarm->Cancel();
-  }
 }
 
 } // namespace Quic

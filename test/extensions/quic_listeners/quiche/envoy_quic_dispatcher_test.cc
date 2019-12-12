@@ -10,7 +10,6 @@
 #include "quiche/quic/test_tools/quic_dispatcher_peer.h"
 #include "quiche/quic/test_tools/crypto_test_utils.h"
 #include "quiche/quic/test_tools/quic_test_utils.h"
-#include "quiche/quic/test_tools/quic_buffered_packet_store_peer.h"
 #include "quiche/quic/platform/api/quic_text_utils.h"
 #pragma GCC diagnostic pop
 
@@ -84,17 +83,10 @@ public:
   }
 
   void TearDown() override {
-    // Cancel buffered packet expiration alarm to avoid failing assertion in
-    // QuicBufferedPacketStore destructor.
-    // TODO(danzh2010): Remove once #8496 lands.
     quic::QuicBufferedPacketStore* buffered_packets =
         quic::test::QuicDispatcherPeer::GetBufferedPackets(&envoy_quic_dispatcher_);
     EXPECT_FALSE(buffered_packets->HasChlosBuffered());
     EXPECT_FALSE(buffered_packets->HasBufferedPackets(connection_id_));
-    auto alarm = quic::test::QuicBufferedPacketStorePeer::expiration_alarm(buffered_packets);
-    if (alarm) {
-      alarm->Cancel();
-    }
 
     envoy_quic_dispatcher_.Shutdown();
     dispatcher_->run(Event::Dispatcher::RunType::NonBlock);
