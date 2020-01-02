@@ -17,12 +17,10 @@
 #include "common/common/logger.h"
 #include "common/network/listen_socket_impl.h"
 #include "common/network/socket_option_factory.h"
-#include "common/network/io_socket_error_impl.h"
 #include "extensions/quic_listeners/quiche/active_quic_listener.h"
 #include "test/test_common/simulated_time_system.h"
 #include "test/test_common/environment.h"
 #include "test/mocks/network/mocks.h"
-#include "test/mocks/network/io_handle.h"
 #include "test/test_common/utility.h"
 #include "test/test_common/network_utility.h"
 #include "absl/time/time.h"
@@ -30,20 +28,13 @@
 #include "gmock/gmock.h"
 #include "extensions/quic_listeners/quiche/platform/envoy_quic_clock.h"
 #include "extensions/quic_listeners/quiche/envoy_quic_utils.h"
-#include "common/network/udp_listener_impl.h"
 
 using testing::Return;
 using testing::ReturnRef;
 
 namespace Envoy {
-namespace Network {
-class UdpListenerImplPeer {
-public:
-  static void handleReadCallback(UdpListenerImpl* listener) { listener->handleReadCallback(); }
-};
-} // namespace Network
-
 namespace Quic {
+
 class ActiveQuicListenerPeer {
 public:
   static EnvoyQuicDispatcher* quic_dispatcher(ActiveQuicListener& listener) {
@@ -52,10 +43,6 @@ public:
 
   static quic::QuicCryptoServerConfig& crypto_config(ActiveQuicListener& listener) {
     return *listener.crypto_config_;
-  }
-
-  static Network::UdpListener* udp_listener(ActiveQuicListener& listener) {
-    return listener.udp_listener_.get();
   }
 };
 
@@ -68,17 +55,14 @@ protected:
       : version_(GetParam()), api_(Api::createApiForTest(simulated_time_system_)),
         dispatcher_(api_->allocateDispatcher()), clock_(*dispatcher_),
         local_address_(Network::Test::getCanonicalLoopbackAddress(version_)),
-        listen_socket_(std::make_shared<Network::MockListenSocket>()),
-        socket_options_(std::make_shared<Network::Socket::Options>()),
         connection_handler_(*dispatcher_, "test_thread") {}
 
   void SetUp() override {
-    EXPECT_CALL(io_handle_, fd()).WillRepeatedly(Return(-1));
-    EXPECT_CALL(*listen_socket_, ioHandle()).WillRepeatedly(ReturnRef(io_handle_));
-    EXPECT_CALL(*listen_socket_, options()).WillRepeatedly(ReturnRef(socket_options_));
-    EXPECT_CALL(*listen_socket_, localAddress()).WillRepeatedly(ReturnRef(local_address_));
+    listen_socket_ =
+        std::make_shared<Network::UdpListenSocket>(local_address_, nullptr, /*bind*/ true);
+    listen_socket_->addOptions(Network::SocketOptionFactory::buildIpPacketInfoOptions());
+    listen_socket_->addOptions(Network::SocketOptionFactory::buildRxQueueOverFlowOptions());
 
-    // TODO move to initializer list
     quic_listener_ = std::make_unique<ActiveQuicListener>(
         *dispatcher_, connection_handler_, listen_socket_, listener_config_, quic_config_);
     simulated_time_system_.sleep(std::chrono::milliseconds(100));
@@ -159,7 +143,6 @@ protected:
                                              /*version_flag=*/true, /*reset_flag*/ false,
                                              /*packet_number=*/1, packet_content));
 
-    /*
     Buffer::RawSlice first_slice{
         reinterpret_cast<void*>(const_cast<char*>(encrypted_packet->data())),
         encrypted_packet->length()};
@@ -167,40 +150,6 @@ protected:
     auto send_rc = Network::Utility::writeToSocket(client_sockets_.back()->ioHandle(), &first_slice,
                                                    1, nullptr, *listen_socket_->localAddress());
     ASSERT_EQ(encrypted_packet->length(), send_rc.rc_);
-    */
-
-    testing::Sequence seq;
-    // Feed packet to listener on first recvmsg call.
-    EXPECT_CALL(io_handle_, recvmsg(_, _, _, _))
-        .InSequence(seq)
-        .WillOnce(
-            Invoke([this, &encrypted_packet](
-                       Buffer::RawSlice* slices, const uint64_t num_slice, uint32_t /*self_port*/,
-                       Network::IoHandle::RecvMsgOutput& output) -> Api::IoCallUint64Result {
-              EXPECT_TRUE(encrypted_packet);
-              EXPECT_LE(1u, num_slice);
-              EXPECT_LE(encrypted_packet->length(), slices->len_);
-              memcpy(slices->mem_, encrypted_packet->data(), encrypted_packet->length());
-              *output.dropped_packets_ = 0;
-              output.local_address_ = local_address_;
-              output.peer_address_ = local_address_;
-              Api::IoErrorPtr no_error(nullptr, [](Api::IoError*) {});
-              return Api::IoCallUint64Result(encrypted_packet->length(), std::move(no_error));
-            }));
-    // Inform listener that there is no more data to read on second recvmsg call.
-    EXPECT_CALL(io_handle_, recvmsg(_, _, _, _))
-        .InSequence(seq)
-        .WillOnce(Invoke([](Buffer::RawSlice* /*slices*/, const uint64_t /*num_slice*/,
-                                uint32_t /*self_port*/, Network::IoHandle::RecvMsgOutput &
-                                /*output*/) -> Api::IoCallUint64Result {
-          Api::IoErrorPtr error(Network::IoSocketError::getIoSocketEagainInstance(),
-                                Network::IoSocketError::deleteIoError);
-          return Api::IoCallUint64Result(0, std::move(error));
-        }));
-
-    Network::UdpListener* udp_listener = ActiveQuicListenerPeer::udp_listener(*quic_listener_);
-    Network::UdpListenerImplPeer::handleReadCallback(
-        dynamic_cast<Network::UdpListenerImpl*>(udp_listener));
   }
 
   void ReadFromClientSockets() {
@@ -242,9 +191,8 @@ protected:
   Event::DispatcherPtr dispatcher_;
   EnvoyQuicClock clock_;
   Network::Address::InstanceConstSharedPtr local_address_;
-  testing::StrictMock<Network::MockIoHandle> io_handle_;
-  std::shared_ptr<Network::MockListenSocket> listen_socket_;
-  Network::Socket::OptionsSharedPtr socket_options_;
+  Network::SocketSharedPtr listen_socket_;
+  Network::SocketPtr client_socket_;
   std::shared_ptr<Network::MockReadFilter> read_filter_;
   Network::MockConnectionCallbacks network_connection_callbacks_;
   NiceMock<Network::MockListenerConfig> listener_config_;

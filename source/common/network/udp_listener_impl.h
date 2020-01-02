@@ -14,8 +14,6 @@
 namespace Envoy {
 namespace Network {
 
-class UdpListenerImplPeer;
-
 /**
  * libevent implementation of Network::Listener for UDP.
  */
@@ -55,8 +53,6 @@ protected:
   uint32_t packets_dropped_{0};
 
 private:
-  friend class UdpListenerImplPeer;
-
   void onSocketEvent(short flags);
 
   TimeSource& time_source_;
