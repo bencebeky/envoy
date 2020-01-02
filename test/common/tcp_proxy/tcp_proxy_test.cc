@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "envoy/config/accesslog/v2/file.pb.h"
+#include "envoy/config/filter/accesslog/v2/accesslog.pb.h"
 #include "envoy/config/filter/network/tcp_proxy/v2/tcp_proxy.pb.h"
 #include "envoy/config/filter/network/tcp_proxy/v2/tcp_proxy.pb.validate.h"
 
@@ -1563,9 +1564,16 @@ TEST_F(TcpProxyTest, DEPRECATED_FEATURE_TEST(AccessLogBytesRxTxDuration)) {
   upstream_callbacks_->onEvent(Network::ConnectionEvent::RemoteClose);
   filter_.reset();
 
+#ifndef GTEST_USES_SIMPLE_RE
   EXPECT_THAT(access_log_data_,
               MatchesRegex(
                   "bytesreceived=1 bytessent=2 datetime=[0-9-]+T[0-9:.]+Z nonzeronum=[1-9][0-9]*"));
+#else
+  EXPECT_THAT(access_log_data_,
+              MatchesRegex("bytesreceived=1 bytessent=2 "
+                           "datetime=\\d+-\\d+-\\d+T\\d+:\\d+:\\d+\\.\\d+Z nonzeronum=\\d+"));
+  EXPECT_THAT(access_log_data_, Not(MatchesRegex("nonzeronum=0")));
+#endif
 }
 
 TEST_F(TcpProxyTest, DEPRECATED_FEATURE_TEST(AccessLogUpstreamSSLConnection)) {

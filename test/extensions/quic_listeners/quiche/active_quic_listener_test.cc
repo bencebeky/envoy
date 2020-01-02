@@ -25,6 +25,7 @@
 #include "test/mocks/network/io_handle.h"
 #include "test/test_common/utility.h"
 #include "test/test_common/network_utility.h"
+#include "absl/time/time.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "extensions/quic_listeners/quiche/platform/envoy_quic_clock.h"
@@ -224,7 +225,7 @@ protected:
         }
 
         retry++;
-        ::usleep(10000);
+        absl::SleepFor(absl::Milliseconds(10));
       } while (true);
     }
   }
