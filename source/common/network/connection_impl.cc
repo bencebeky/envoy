@@ -1042,7 +1042,14 @@ ClientConnectionImpl::ClientConnectionImpl(
     Network::TransportSocketPtr&& transport_socket,
     const Network::ConnectionSocket::OptionsSharedPtr& options,
     const Network::TransportSocketOptionsConstSharedPtr& transport_options)
-    : ClientConnectionImpl(dispatcher, std::make_unique<ClientSocketImpl>(remote_address, options),
+    : ClientConnectionImpl(dispatcher,
+                           [&]() {
+                             auto socket_or = ClientSocketImpl::create(remote_address, options);
+                             if (!socket_or.ok()) {
+                               throwEnvoyExceptionOrPanic(std::string(socket_or.status().message()));
+                             }
+                             return std::move(*socket_or);
+                           }(),
                            source_address, std::move(transport_socket), options,
                            transport_options) {}
 

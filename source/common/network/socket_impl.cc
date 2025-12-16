@@ -9,14 +9,27 @@
 namespace Envoy {
 namespace Network {
 
-SocketImpl::SocketImpl(Socket::Type sock_type,
-                       const Address::InstanceConstSharedPtr& address_for_io_handle,
-                       const Address::InstanceConstSharedPtr& remote_address,
-                       const SocketCreationOptions& options)
-    : io_handle_(ioHandleForAddr(sock_type, address_for_io_handle, options).value_or(nullptr)),
+absl::StatusOr<std::unique_ptr<SocketImpl>>
+SocketImpl::create(Socket::Type sock_type,
+                   const Address::InstanceConstSharedPtr& address_for_io_handle,
+                   const Address::InstanceConstSharedPtr& remote_address,
+                   const SocketCreationOptions& options) {
+  auto io_handle_or = ioHandleForAddr(sock_type, address_for_io_handle, options);
+  if (!io_handle_or.ok()) {
+    return io_handle_or.status();
+  }
+
+  auto socket = std::unique_ptr<SocketImpl>(new SocketImpl(
+      std::move(*io_handle_or), sock_type, address_for_io_handle->type(), remote_address));
+  return socket;
+}
+
+SocketImpl::SocketImpl(IoHandlePtr&& io_handle, Socket::Type sock_type, Address::Type addr_type,
+                       const Address::InstanceConstSharedPtr& remote_address)
+    : io_handle_(std::move(io_handle)),
       connection_info_provider_(
           std::make_shared<ConnectionInfoSetterImpl>(nullptr, remote_address)),
-      sock_type_(sock_type), addr_type_(address_for_io_handle->type()) {}
+      sock_type_(sock_type), addr_type_(addr_type) {}
 
 SocketImpl::SocketImpl(IoHandlePtr&& io_handle,
                        const Address::InstanceConstSharedPtr& local_address,

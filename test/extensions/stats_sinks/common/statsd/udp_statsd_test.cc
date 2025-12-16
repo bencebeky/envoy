@@ -64,14 +64,17 @@ TEST(UdpOverUdsStatsdSinkTest, InitWithPipeAddress) {
   sink.flush(snapshot);
 
   // Start the server.
-  Network::SocketImpl sock(Network::Socket::Type::Datagram, uds_address, nullptr, {});
-  RELEASE_ASSERT(sock.setBlockingForTest(false).return_value_ != -1, "");
-  sock.bind(uds_address);
+  absl::StatusOr<std::unique_ptr<Network::SocketImpl>> sock_or =
+      Network::SocketImpl::create(Network::Socket::Type::Datagram, uds_address, nullptr, {});
+  ASSERT_TRUE(sock_or.ok());
+  std::unique_ptr<Network::SocketImpl> sock = std::move(*sock_or);
+  RELEASE_ASSERT(sock->setBlockingForTest(false).return_value_ != -1, "");
+  sock->bind(uds_address);
 
   // Do the flush which should have somewhere to write now.
   sink.flush(snapshot);
   Buffer::OwnedImpl receive_buffer;
-  sock.ioHandle().read(receive_buffer, 32);
+  sock->ioHandle().read(receive_buffer, 32);
   EXPECT_EQ("envoy.test_counter:1|c", receive_buffer.toString());
 }
 #endif

@@ -636,7 +636,13 @@ void UdpProxyFilter::UdpActiveSession::createUdpSocket(const Upstream::HostConst
   ASSERT(cluster_);
   // NOTE: The socket call can only fail due to memory/fd exhaustion. No local ephemeral port
   //       is bound until the first packet is sent to the upstream host.
-  udp_socket_ = filter_.createUdpSocket(host);
+  auto socket_or = filter_.createUdpSocket(host);
+  if (!socket_or.ok()) {
+    ENVOY_LOG(warn, "failed to create socket to upstream host {}: {}",
+              host->address()->asStringView(), socket_or.status().message());
+    return;
+  }
+  udp_socket_ = std::move(*socket_or);
   udp_socket_->ioHandle().initializeFileEvent(
       filter_.read_callbacks_->udpListener().dispatcher(),
       [this](uint32_t) {

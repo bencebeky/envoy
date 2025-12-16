@@ -7,17 +7,24 @@
 namespace Envoy {
 namespace Quic {
 
-QuicClientPacketWriterFactory::CreationResult
+absl::StatusOr<QuicClientPacketWriterFactory::CreationResult>
 QuicClientPacketWriterFactoryImpl::createSocketAndQuicPacketWriter(
     Network::Address::InstanceConstSharedPtr server_addr, quic::QuicNetworkHandle /*network*/,
     Network::Address::InstanceConstSharedPtr& local_addr,
     const Network::ConnectionSocket::OptionsSharedPtr& options) {
-  Network::ConnectionSocketPtr connection_socket =
-      createConnectionSocket(server_addr, local_addr, options);
+  auto connection_socket_or = createConnectionSocket(server_addr, local_addr, options);
+  if (!connection_socket_or.ok()) {
+    return connection_socket_or.status();
+  }
+
+  Network::ConnectionSocketPtr connection_socket = std::move(*connection_socket_or);
+
   Network::IoHandle& io_handle = connection_socket->ioHandle();
-  return {std::make_unique<EnvoyQuicPacketWriter>(
-              std::make_unique<Network::UdpDefaultWriter>(io_handle)),
-          std::move(connection_socket)};
+
+  return QuicClientPacketWriterFactory::CreationResult{
+      std::make_unique<EnvoyQuicPacketWriter>(
+          std::make_unique<Network::UdpDefaultWriter>(io_handle)),
+      std::move(connection_socket)};
 }
 
 } // namespace Quic
