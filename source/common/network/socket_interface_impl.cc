@@ -17,6 +17,8 @@
 #include "source/common/network/io_uring_socket_handle_impl.h"
 #endif
 
+#include "absl/status/statusor.h"
+
 namespace Envoy {
 namespace Network {
 

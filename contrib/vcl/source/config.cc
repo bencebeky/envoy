@@ -4,6 +4,8 @@
 #include "contrib/vcl/source/vcl_interface.h"
 #include "contrib/vcl/source/vcl_io_handle.h"
 
+#include "absl/status/statusor.h"
+
 namespace Envoy {
 namespace Extensions {
 namespace Network {

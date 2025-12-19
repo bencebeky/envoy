@@ -32,6 +32,7 @@
 #include "test/mocks/stream_info/mocks.h"
 #include "test/test_common/printers.h"
 
+#include "absl/status/statusor.h"
 #include "gmock/gmock.h"
 
 namespace Envoy {

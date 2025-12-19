@@ -1,6 +1,11 @@
 #include "source/common/network/connection_socket_impl.h"
 
+#include <memory>
+#include <utility>
+
 #include "source/common/network/socket_interface.h"
+
+#include "absl/status/statusor.h"
 
 namespace Envoy {
 namespace Network {

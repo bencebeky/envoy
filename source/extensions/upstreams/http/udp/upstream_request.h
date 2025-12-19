@@ -15,6 +15,7 @@
 #include "source/common/router/upstream_request.h"
 #include "source/common/stream_info/stream_info_impl.h"
 
+#include "absl/status/statusor.h"
 #include "quiche/common/capsule.h"
 #include "quiche/common/simple_buffer_allocator.h"
 

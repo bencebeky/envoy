@@ -15,6 +15,9 @@
 #include "source/common/network/socket_interface.h"
 #include "source/common/runtime/runtime_features.h"
 
+#include "absl/status/status.h"
+#include "absl/status/statusor.h"
+
 namespace Envoy {
 namespace Network {
 namespace Address {

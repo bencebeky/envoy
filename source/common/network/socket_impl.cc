@@ -6,6 +6,8 @@
 #include "source/common/api/os_sys_calls_impl.h"
 #include "source/common/common/utility.h"
 
+#include "absl/status/statusor.h"
+
 namespace Envoy {
 namespace Network {
 

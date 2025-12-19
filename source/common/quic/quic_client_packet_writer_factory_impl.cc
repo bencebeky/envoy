@@ -4,6 +4,8 @@
 #include "source/common/quic/envoy_quic_packet_writer.h"
 #include "source/common/quic/envoy_quic_utils.h"
 
+#include "absl/status/statusor.h"
+
 namespace Envoy {
 namespace Quic {
 
