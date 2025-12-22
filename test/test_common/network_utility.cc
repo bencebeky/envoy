@@ -15,6 +15,8 @@
 #include "source/common/network/socket_option_factory.h"
 #include "source/common/runtime/runtime_impl.h"
 
+#include "absl/status/statusor.h"
+
 namespace Envoy {
 namespace Network {
 namespace Test {
@@ -26,12 +28,13 @@ Address::InstanceConstSharedPtr findOrCheckFreePort(Address::InstanceConstShared
                   << (addr_port == nullptr ? "nullptr" : addr_port->asString());
     return nullptr;
   }
-  auto sock_or = SocketImpl::create(type, addr_port, nullptr, {});
+  absl::StatusOr<std::unique_ptr<SocketImpl>> sock_or =
+      SocketImpl::create(type, addr_port, nullptr, {});
   if (!sock_or.ok()) {
     // Socket creation failed (e.g., unsupported IP family)
     return nullptr;
   }
-  auto& sock = *sock_or;
+  std::unique_ptr<SocketImpl> sock = std::move(*sock_or);
   // Not setting REUSEADDR, therefore if the address has been recently used we won't reuse it here.
   // However, because we're going to use the address while checking if it is available, we'll need
   // to set REUSEADDR on listener sockets created by tests using an address validated by this means.
@@ -167,7 +170,8 @@ std::string ipVersionToDnsFamily(Network::Address::IpVersion version) {
 std::pair<Address::InstanceConstSharedPtr, Network::SocketPtr>
 bindFreeLoopbackPort(Address::IpVersion version, Socket::Type type, bool reuse_port) {
   Address::InstanceConstSharedPtr addr = getCanonicalLoopbackAddress(version);
-  auto sock_or = SocketImpl::create(type, addr, nullptr, SocketCreationOptions{});
+  absl::StatusOr<SocketPtr> sock_or =
+      SocketImpl::create(type, addr, nullptr, SocketCreationOptions{});
   if (!sock_or.ok()) {
     throwEnvoyExceptionOrPanic(std::string(sock_or.status().message()));
   }

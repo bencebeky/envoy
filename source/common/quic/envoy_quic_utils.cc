@@ -235,18 +235,20 @@ createConnectionSocket(const Network::Address::InstanceConstSharedPtr& peer_addr
           ? 4u
           : 0u;
 
-  auto connection_socket_or = Network::ConnectionSocketImpl::create(
-      Network::Socket::Type::Datagram,
-      // Use the loopback address if `local_addr` is null, to pass in the socket interface used to
-      // create the IoHandle, without having to make the more expensive `getifaddrs` call.
-      local_addr ? local_addr : getLoopbackAddress(peer_addr), peer_addr,
-      Network::SocketCreationOptions{false, max_addresses_cache_size});
+  absl::StatusOr<std::unique_ptr<Network::ConnectionSocketImpl>> connection_socket_or =
+      Network::ConnectionSocketImpl::create(
+          Network::Socket::Type::Datagram,
+          // Use the loopback address if `local_addr` is null, to pass in the socket interface used
+          // to create the IoHandle, without having to make the more expensive `getifaddrs` call.
+          local_addr ? local_addr : getLoopbackAddress(peer_addr), peer_addr,
+          Network::SocketCreationOptions{false, max_addresses_cache_size});
 
   if (!connection_socket_or.ok()) {
     return connection_socket_or.status();
   }
 
-  auto connection_socket = std::move(*connection_socket_or);
+  std::unique_ptr<Network::ConnectionSocketImpl> connection_socket =
+      std::move(*connection_socket_or);
   connection_socket->setDetectedTransportProtocol("quic");
   connection_socket->addOptions(Network::SocketOptionFactory::buildIpPacketInfoOptions());
   connection_socket->addOptions(Network::SocketOptionFactory::buildRxQueueOverFlowOptions());

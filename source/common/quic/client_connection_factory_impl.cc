@@ -7,6 +7,8 @@
 #include "source/common/quic/quic_transport_socket_factory.h"
 #include "source/common/runtime/runtime_features.h"
 
+#include "absl/status/statusor.h"
+
 namespace Envoy {
 namespace Quic {
 
@@ -67,8 +69,9 @@ std::unique_ptr<Network::ClientConnection> createQuicNetworkConnection(
   ASSERT(!quic_versions.empty());
   ASSERT(info_impl->writer_factory_ != nullptr);
 
-  auto creation_result_or = info_impl->writer_factory_->createSocketAndQuicPacketWriter(
-      server_addr, quic::kInvalidNetworkHandle, local_addr, options);
+  absl::StatusOr<QuicClientPacketWriterFactory::CreationResult> creation_result_or =
+      info_impl->writer_factory_->createSocketAndQuicPacketWriter(
+          server_addr, quic::kInvalidNetworkHandle, local_addr, options);
 
   if (!creation_result_or.ok()) {
     ENVOY_LOG_MISC(error, "Failed to create QUIC socket: {}",

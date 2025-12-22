@@ -16,6 +16,7 @@
 #include "source/common/router/router.h"
 #include "source/extensions/common/proxy_protocol/proxy_protocol_header.h"
 
+#include "absl/status/statusor.h"
 #include "quiche/common/masque/connect_udp_datagram_payload.h"
 #include "quiche/common/simple_buffer_allocator.h"
 
@@ -26,7 +27,7 @@ namespace Http {
 namespace Udp {
 
 void UdpConnPool::newStream(Router::GenericConnectionPoolCallbacks* callbacks) {
-  auto socket_or = createSocket(host_);
+  absl::StatusOr<Envoy::Network::SocketPtr> socket_or = createSocket(host_);
   if (!socket_or.ok()) {
     callbacks->onPoolFailure(ConnectionPool::PoolFailureReason::LocalConnectionFailure,
                              socket_or.status().ToString(), host_);

@@ -25,6 +25,8 @@
 #include "source/common/network/utility.h"
 #include "source/common/runtime/runtime_features.h"
 
+#include "absl/status/statusor.h"
+
 namespace Envoy {
 namespace Network {
 namespace {
@@ -1045,7 +1047,8 @@ ClientConnectionImpl::ClientConnectionImpl(
     : ClientConnectionImpl(
           dispatcher,
           [&]() {
-            auto socket_or = ClientSocketImpl::create(remote_address, options);
+            absl::StatusOr<std::unique_ptr<ClientSocketImpl>> socket_or =
+                ClientSocketImpl::create(remote_address, options);
             if (!socket_or.ok()) {
               throwEnvoyExceptionOrPanic(std::string(socket_or.status().message()));
             }

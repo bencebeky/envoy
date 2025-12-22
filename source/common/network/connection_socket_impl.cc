@@ -13,7 +13,7 @@ namespace Network {
 absl::StatusOr<std::unique_ptr<ConnectionSocketImpl>> ConnectionSocketImpl::create(
     Socket::Type type, const Address::InstanceConstSharedPtr& local_address,
     const Address::InstanceConstSharedPtr& remote_address, const SocketCreationOptions& options) {
-  auto io_handle_or = ioHandleForAddr(type, local_address, options);
+  absl::StatusOr<IoHandlePtr> io_handle_or = ioHandleForAddr(type, local_address, options);
   if (!io_handle_or.ok()) {
     return io_handle_or.status();
   }
@@ -26,7 +26,8 @@ absl::StatusOr<std::unique_ptr<ConnectionSocketImpl>> ConnectionSocketImpl::crea
 absl::StatusOr<std::unique_ptr<ClientSocketImpl>>
 ClientSocketImpl::create(const Address::InstanceConstSharedPtr& remote_address,
                          const OptionsSharedPtr& options) {
-  auto io_handle_or = ioHandleForAddr(Socket::Type::Stream, remote_address, {});
+  absl::StatusOr<IoHandlePtr> io_handle_or =
+      ioHandleForAddr(Socket::Type::Stream, remote_address, {});
   if (!io_handle_or.ok()) {
     return io_handle_or.status();
   }

@@ -14,7 +14,8 @@ QuicClientPacketWriterFactoryImpl::createSocketAndQuicPacketWriter(
     Network::Address::InstanceConstSharedPtr server_addr, quic::QuicNetworkHandle /*network*/,
     Network::Address::InstanceConstSharedPtr& local_addr,
     const Network::ConnectionSocket::OptionsSharedPtr& options) {
-  auto connection_socket_or = createConnectionSocket(server_addr, local_addr, options);
+  absl::StatusOr<Network::ConnectionSocketPtr> connection_socket_or =
+      createConnectionSocket(server_addr, local_addr, options);
   if (!connection_socket_or.ok()) {
     return connection_socket_or.status();
   }
