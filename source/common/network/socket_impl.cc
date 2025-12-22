@@ -11,11 +11,9 @@
 namespace Envoy {
 namespace Network {
 
-absl::StatusOr<std::unique_ptr<SocketImpl>>
-SocketImpl::create(Socket::Type sock_type,
-                   const Address::InstanceConstSharedPtr& address_for_io_handle,
-                   const Address::InstanceConstSharedPtr& remote_address,
-                   const SocketCreationOptions& options) {
+absl::StatusOr<std::unique_ptr<SocketImpl>> SocketImpl::create(
+    Socket::Type sock_type, const Address::InstanceConstSharedPtr& address_for_io_handle,
+    const Address::InstanceConstSharedPtr& remote_address, const SocketCreationOptions& options) {
   auto io_handle_or = ioHandleForAddr(sock_type, address_for_io_handle, options);
   if (!io_handle_or.ok()) {
     return io_handle_or.status();

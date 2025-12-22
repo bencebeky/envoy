@@ -33,17 +33,20 @@ TEST_P(ConnectionSocketImplTest, LowerCaseRequestedServerName) {
   absl::string_view serverName("www.EXAMPLE.com");
   absl::string_view expectedServerName("www.example.com");
   auto loopback_addr = Network::Test::getCanonicalLoopbackAddress(Address::IpVersion::v4);
-  auto conn_socket_or = ConnectionSocketImpl::create(Socket::Type::Stream, loopback_addr, loopback_addr, {});
+  auto conn_socket_or =
+      ConnectionSocketImpl::create(Socket::Type::Stream, loopback_addr, loopback_addr, {});
   ASSERT_TRUE(conn_socket_or.ok());
   auto conn_socket_ = std::move(*conn_socket_or);
   conn_socket_->setRequestedServerName(serverName);
   EXPECT_EQ(expectedServerName, conn_socket_->requestedServerName());
   conn_socket_->setRequestedApplicationProtocols({"h2", "http/1.1"});
-  EXPECT_THAT(conn_socket_->requestedApplicationProtocols(), testing::ElementsAre("h2", "http/1.1"));
+  EXPECT_THAT(conn_socket_->requestedApplicationProtocols(),
+              testing::ElementsAre("h2", "http/1.1"));
 }
 
 TEST_P(ConnectionSocketImplTest, IpVersion) {
-  auto socket_or = ClientSocketImpl::create(Network::Test::getCanonicalLoopbackAddress(GetParam()), nullptr);
+  auto socket_or =
+      ClientSocketImpl::create(Network::Test::getCanonicalLoopbackAddress(GetParam()), nullptr);
   ASSERT_TRUE(socket_or.ok());
   auto socket = std::move(*socket_or);
   EXPECT_EQ(socket->ipVersion(), GetParam());

@@ -73,7 +73,8 @@ public:
                      const UdpProxyFilterConfigSharedPtr& config)
       : UdpProxyFilter(callbacks, config) {}
 
-  MOCK_METHOD(absl::StatusOr<Network::SocketPtr>, createUdpSocket, (const Upstream::HostConstSharedPtr& host));
+  MOCK_METHOD(absl::StatusOr<Network::SocketPtr>, createUdpSocket,
+              (const Upstream::HostConstSharedPtr& host));
 };
 
 class TestStickySessionUdpProxyFilter : public TestUdpProxyFilter,
@@ -326,7 +327,8 @@ public:
     }
 
     EXPECT_CALL(*filter_, createUdpSocket(_))
-        .WillOnce(Return(ByMove(absl::StatusOr<Network::SocketPtr>{Network::SocketPtr{test_sessions_.back().socket_}})));
+        .WillOnce(Return(ByMove(absl::StatusOr<Network::SocketPtr>{
+            Network::SocketPtr{test_sessions_.back().socket_}})));
     EXPECT_CALL(
         *new_session.socket_->io_handle_,
         createFileEvent_(_, _, Event::PlatformDefaultTriggerType, Event::FileReadyType::Read))

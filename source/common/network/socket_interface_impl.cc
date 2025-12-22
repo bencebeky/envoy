@@ -177,9 +177,9 @@ bool SocketInterfaceImpl::ipFamilySupported(int domain) const {
   const Api::SysCallSocketResult result = os_sys_calls.socket(domain, SOCK_STREAM, 0);
   if (SOCKET_VALID(result.return_value_)) {
     const Api::SysCallIntResult close_result = os_sys_calls.close(result.return_value_);
-      RELEASE_ASSERT(
-          close_result.return_value_ == 0,
-          fmt::format("Fail to close fd: response code {}", errorDetails(close_result.errno_)));
+    RELEASE_ASSERT(
+        close_result.return_value_ == 0,
+        fmt::format("Fail to close fd: response code {}", errorDetails(close_result.errno_)));
   }
   return SOCKET_VALID(result.return_value_);
 }

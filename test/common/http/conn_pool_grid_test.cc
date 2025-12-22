@@ -1790,19 +1790,16 @@ TEST_F(ConnectivityGridTest, ConnectionCloseDuringAsyncConnect) {
   TestThreadsafeSingletonInjector<Api::OsSysCallsImpl> os_calls(&os_sys_calls);
 
   // Set up setsockopt_ expectation to allow any number of calls
-  EXPECT_CALL(os_sys_calls, setsockopt_(_, _, _, _, _))
-      .WillRepeatedly(Return(0));
+  EXPECT_CALL(os_sys_calls, setsockopt_(_, _, _, _, _)).WillRepeatedly(Return(0));
 
   {
     testing::InSequence s2;
     // First socket() call is for ipFamilySupported() check
-    EXPECT_CALL(os_sys_calls, socket(_, _, _))
-        .WillOnce(Return(Api::SysCallSocketResult{2, 0}));
+    EXPECT_CALL(os_sys_calls, socket(_, _, _)).WillOnce(Return(Api::SysCallSocketResult{2, 0}));
     // Close for the ipFamilySupported() check socket
     EXPECT_CALL(os_sys_calls, close(2)).WillOnce(Return(Api::SysCallIntResult{0, 0}));
     // Second socket() call is for actual connection
-    EXPECT_CALL(os_sys_calls, socket(_, _, _))
-        .WillOnce(Return(Api::SysCallSocketResult{1, 0}));
+    EXPECT_CALL(os_sys_calls, socket(_, _, _)).WillOnce(Return(Api::SysCallSocketResult{1, 0}));
   }
 #if defined(__APPLE__) || defined(WIN32)
   EXPECT_CALL(os_sys_calls, setsocketblocking(1, false))

@@ -114,8 +114,7 @@ class ClientSocketImpl : public ConnectionSocketImpl {
 public:
   // Factory method that returns StatusOr for socket creation errors
   static absl::StatusOr<std::unique_ptr<ClientSocketImpl>>
-  create(const Address::InstanceConstSharedPtr& remote_address,
-         const OptionsSharedPtr& options);
+  create(const Address::InstanceConstSharedPtr& remote_address, const OptionsSharedPtr& options);
 
   // Legacy constructor - deleted, use create() instead
   ClientSocketImpl(const Address::InstanceConstSharedPtr& remote_address,
@@ -123,8 +122,7 @@ public:
 
 protected:
   // Protected constructor for use by factory method
-  ClientSocketImpl(IoHandlePtr&& io_handle,
-                   const Address::InstanceConstSharedPtr& remote_address,
+  ClientSocketImpl(IoHandlePtr&& io_handle, const Address::InstanceConstSharedPtr& remote_address,
                    const OptionsSharedPtr& options)
       : ConnectionSocketImpl(std::move(io_handle), nullptr, remote_address) {
     if (options) {

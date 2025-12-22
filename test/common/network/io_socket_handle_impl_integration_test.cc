@@ -28,7 +28,8 @@ TEST(IoSocketHandleImplIntegration, LastRoundTripIntegrationTest) {
   server.sin_port = htons(80);
 
   Address::InstanceConstSharedPtr addr(new Address::Ipv4Instance(&server));
-  absl::StatusOr<std::unique_ptr<ClientSocketImpl>> socket_or = ClientSocketImpl::create(addr, nullptr);
+  absl::StatusOr<std::unique_ptr<ClientSocketImpl>> socket_or =
+      ClientSocketImpl::create(addr, nullptr);
   ASSERT_TRUE(socket_or.ok());
   std::unique_ptr<ClientSocketImpl> socket = std::move(*socket_or);
   socket->setBlockingForTest(true);

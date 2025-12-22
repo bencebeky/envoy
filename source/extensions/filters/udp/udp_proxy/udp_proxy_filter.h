@@ -909,10 +909,11 @@ private:
   ActiveSession* createSessionWithOptionalHost(Network::UdpRecvData::LocalPeerAddresses&& addresses,
                                                const Upstream::HostConstSharedPtr& host);
 
-  virtual absl::StatusOr<Network::SocketPtr> createUdpSocket(const Upstream::HostConstSharedPtr& host) {
+  virtual absl::StatusOr<Network::SocketPtr>
+  createUdpSocket(const Upstream::HostConstSharedPtr& host) {
     // Virtual so this can be overridden in unit tests.
-    return Network::SocketImpl::create(Network::Socket::Type::Datagram, host->address(),
-                                       nullptr, Network::SocketCreationOptions{});
+    return Network::SocketImpl::create(Network::Socket::Type::Datagram, host->address(), nullptr,
+                                       Network::SocketCreationOptions{});
   }
 
   void fillProxyStreamInfo();

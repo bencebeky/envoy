@@ -86,9 +86,8 @@ void EnvoyQuicClientConnection::EnvoyQuicClinetPathContextFactory::CreatePathVal
           ? connection_.connectionSocket()->connectionInfoProvider().remoteAddress()
           : quicAddressToEnvoyAddressInstance(peer_address);
   // new_local_address will be re-assigned if it is nullptr.
-  auto result_or =
-      writer_factory_.createSocketAndQuicPacketWriter(remote_address, network, new_local_address,
-                                                      connection_.connectionSocket()->options());
+  auto result_or = writer_factory_.createSocketAndQuicPacketWriter(
+      remote_address, network, new_local_address, connection_.connectionSocket()->options());
 
   if (!result_or.ok()) {
     ENVOY_LOG_MISC(warn, "Failed to create probing socket for path validation: {}",
@@ -272,12 +271,10 @@ void EnvoyQuicClientConnection::probeWithNewPort(const quic::QuicSocketAddress& 
 
   // The probing socket will have the same host but a different port.
   ASSERT(migration_helper_ == nullptr && writer_factory_.has_value());
-  auto creation_result_or =
-      writer_factory_->createSocketAndQuicPacketWriter(
-          (peer_addr == peer_address()
-               ? connectionSocket()->connectionInfoProvider().remoteAddress()
-               : quicAddressToEnvoyAddressInstance(peer_addr)),
-          quic::kInvalidNetworkHandle, new_local_address, connectionSocket()->options());
+  auto creation_result_or = writer_factory_->createSocketAndQuicPacketWriter(
+      (peer_addr == peer_address() ? connectionSocket()->connectionInfoProvider().remoteAddress()
+                                   : quicAddressToEnvoyAddressInstance(peer_addr)),
+      quic::kInvalidNetworkHandle, new_local_address, connectionSocket()->options());
 
   if (!creation_result_or.ok()) {
     ENVOY_LOG_MISC(warn, "Failed to create probing socket for path validation: {}",
